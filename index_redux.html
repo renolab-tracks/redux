@@ -82,12 +82,23 @@
         next(action)
       }
 
+      const thunk = ({ dispatch, getState }) => (next) => (action) => {
+        // If the "action" is actually a function instead...
+        if (typeof action === 'function') {
+          // then call the function and pass `dispatch` and `getState` as arguments
+          return action(dispatch, getState)
+        }
+
+        // Otherwise, it's a normal action - send it onwards
+        return next(action)
+      }
+
       const store = Redux.createStore(
         Redux.combineReducers({
           todos,
           goals,
         }),
-        Redux.applyMiddleware(checker, logger),
+        Redux.applyMiddleware(checker, logger, thunk),
       )
       const { dispatch, getState, subscribe } = store
 
@@ -191,6 +202,21 @@
             name: 'Master Front-End',
           }),
         )
+
+        dispatch(
+          multipleDispatchesAction({
+            id: generateId(),
+            name: 'to be added to todo and goals',
+            complete: false,
+          }),
+        )
+      }
+
+      function multipleDispatchesAction(data) {
+        return (dispatch, getState) => {
+          dispatch(addTodoAction(data))
+          dispatch(addGoalAction(data))
+        }
       }
 
       function addToDo() {
